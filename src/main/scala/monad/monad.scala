@@ -9,25 +9,29 @@ package object monad {
 
     def get: A
 
-    def pure[R](x: R): Wrap[R] = ???
+    def pure[R](x: R): Wrap[R] = Wrap(x)
 
-    def flatMap[R](f: A => Wrap[R]): Wrap[R] = {
-      ???
+    def flatMap[R](f: A => Wrap[R]): Wrap[R] = this match {
+      case EmptyWrap => EmptyWrap
+      case NonEmptyWrap(result) => f(result)
     }
 
     // HINT: map можно реализовать через pure и flatMap
-    def map[R](f: A => R): Wrap[R] = {
-      ???
-    }
+    def map[R](f: A => R): Wrap[R] = flatMap(t => pure(f(t)))
 
-    def withFilter(f: A => Boolean): Wrap[A] = {
-      ???
+    def withFilter(f: A => Boolean): Wrap[A] = this match {
+      case EmptyWrap => EmptyWrap
+      case NonEmptyWrap(result) if f(result) => this
+      case _ => EmptyWrap
     }
 
   }
 
   object Wrap {
     def empty[R]: Wrap[R] = EmptyWrap
+    def apply[R](v: R): Wrap[R] = {
+      if (v == null) EmptyWrap else NonEmptyWrap(v)
+    }
   }
 
   case class NonEmptyWrap[A](result: A) extends Wrap[A] {
