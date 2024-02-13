@@ -1,7 +1,5 @@
 package module1.futures
 
-import module1.futures.HomeworksUtils.TaskSyntax
-
 import scala.concurrent.{ExecutionContext, Future}
 
 object task_futures_sequence {
@@ -19,8 +17,23 @@ object task_futures_sequence {
    * @param futures список асинхронных задач
    * @return асинхронную задачу с кортежом из двух списков
    */
+
   def fullSequence[A](futures: List[Future[A]])
-                     (implicit ex: ExecutionContext): Future[(List[A], List[Throwable])] =
-    task"Реализуйте метод `fullSequence`" ()
+                     (implicit ex: ExecutionContext): Future[(List[A], List[Throwable])] = {
+    // Преобразуем каждый Future в Future, который всегда завершается успешно,
+    // но возвращает Either с Left для ошибок и Right для успешных результатов.
+    val futuresOfEither: List[Future[Either[Throwable, A]]] = futures.map { future =>
+      future.map(Right(_)).recover { case e => Left(e) }
+    }
+
+    // Используем Future.traverse для преобразования списка Future[Either] в Future списка Either
+    Future.traverse(futuresOfEither)(identity).map { listOfEither => {
+      // Разделяем список Either на два списка: один для успешных результатов, другой для ошибок
+      val (lefts, rights) = listOfEither.partition(_.isLeft)
+      (rights.flatMap(_.toOption), lefts.flatMap(_.left.toOption))
+      }
+    }
+  }
+
 
 }
