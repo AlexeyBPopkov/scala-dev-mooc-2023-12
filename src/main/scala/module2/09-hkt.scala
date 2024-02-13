@@ -40,10 +40,13 @@ object higher_kinded_types{
         def map[B](f: A => B): List[B] = opt.map(f)
         def flatMap[B](f: A => List[B]): List[B] = opt.flatMap(f)
       }
+
+    implicit def eitherBindable[E, A](either: Either[E, A]): Bindable[({type lambda[X] = Either[E, X]})#lambda, A] =
+      new Bindable[({type lambda[X] = Either[E, X]})#lambda, A] {
+        def map[B](f: A => B): Either[E, B] = either.map(f)
+        def flatMap[B](f: A => Either[E, B]): Either[E, B] = either.flatMap(f)
+      }
   }
-
-
-
 
 
   val optA: Option[Int] = Some(1)
@@ -52,10 +55,14 @@ object higher_kinded_types{
   val list1 = List(1, 2, 3)
   val list2 = List(4, 5, 6)
 
-  lazy val r3: Unit = println(tupleBindable(optA, optB))
-  lazy val r4: Unit = println(tupleBindable(list1, list2))
+  val either1: Either[String, Int] = Right(10)
+  val either2: Either[String, Int] = Right(20)
+
+  lazy val t3: Unit = println(tupleBindable(optA, optB))
+  lazy val t4: Unit = println(tupleBindable(list1, list2))
 
   lazy val r1: Unit = println(tuplef(optA, optB))
   lazy val r2: Unit = println(tuplef(list1, list2))
+  lazy val r3: Unit = println(tuplef(either1, either2))
 
 }
