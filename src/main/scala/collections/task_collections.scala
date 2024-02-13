@@ -1,5 +1,7 @@
 package collections
 
+import scala.collection.immutable.{ListMap, SortedSet}
+
 object task_collections {
 
   def isASCIIString(str: String): Boolean = str.matches("[A-Za-z]+")
@@ -15,8 +17,8 @@ object task_collections {
    * HINT: Тут удобно использовать collect и zipWithIndex
    *
    * **/
-  def capitalizeIgnoringASCII(text: List[String]): List[String] = {
-    List.empty
+  def capitalizeIgnoringASCII(strings: List[String]): List[String] = {
+    strings.tail.map(s => if (isASCIIString(s)) s.toUpperCase() else s).+:(strings.head)
   }
 
   /**
@@ -29,7 +31,9 @@ object task_collections {
    * HINT: Для всех возможных комбинаций чисел стоит использовать Map
    * **/
   def numbersToNumericString(text: String): String = {
-    ""
+    val dict: ListMap[String, String] = ListMap("0" -> "zero", "1" -> "one", "2" -> "two", "3" -> "three", "4" -> "four", "5" -> "five", "6" -> "six", "7" -> "seven", "8" -> "eight", "9" -> "nine")
+    val regexes: ListMap[String, String]  = dict.map((t: (String, String)) => ("(^|\\s)" + t._1 + "(\\s|$)", "$1" + t._2 + "$2"))
+    regexes.foldLeft(text)((acc, tuple) => acc.replaceAll(tuple._1, tuple._2))
   }
 
   /**
@@ -41,13 +45,14 @@ object task_collections {
    * **/
 
   case class Auto(mark: String, model: String)
+  implicit val autoOrdering: Ordering[Auto] = Ordering.by(p => (p.mark, p.model))
 
   /**
    * Хотим узнать какие машины можно обслужить учитывая этих двух дилеров
    * Реализуйте метод который примет две коллекции (два источника) и вернёт объединенный список уникальный значений
    **/
   def intersectionAuto(dealerOne: Iterable[Auto], dealerTwo: Iterable[Auto]): Iterable[Auto] = {
-    Iterable.empty
+    dealerOne.to(SortedSet).union(dealerTwo.to(SortedSet))
   }
 
   /**
@@ -56,6 +61,6 @@ object task_collections {
    * и вернёт уникальный список машин обслуживающихся в первом дилерском центре и не обслуживающимся во втором
    **/
   def filterAllLeftDealerAutoWithoutRight(dealerOne: Iterable[Auto], dealerTwo: Iterable[Auto]): Iterable[Auto] = {
-    Iterable.empty
+    dealerOne.to(SortedSet).diff(dealerTwo.to(SortedSet))
   }
 }

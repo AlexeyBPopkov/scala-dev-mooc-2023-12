@@ -2,6 +2,7 @@ package module2
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
+import scala.language.implicitConversions
 
 object implicits {
 
