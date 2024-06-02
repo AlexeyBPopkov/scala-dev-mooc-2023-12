@@ -3,6 +3,7 @@ package module1
 import java.util.UUID
 import scala.annotation.tailrec
 import java.time.Instant
+import scala.::
 import scala.language.postfixOps
 
 
@@ -100,7 +101,7 @@ object hof{
     result
   }
 
-  def doomy(str: String) = {
+  def doomy(str: String): Unit = {
     Thread.sleep(1000)
     println(str)
   }
@@ -220,14 +221,37 @@ object hof{
       case None => throw new Exception("get on empty option")
     }
 
-
     def map[B](f: T => B): Option[B] = flatMap(t => Option(f(t)))
 
     def flatMap[B](f: T => Option[B]): Option[B] = this match {
       case Some(v) => f(v)
       case None => None
     }
-
+    /**
+     *
+     * Реализовать метод printIfAny, который будет печатать значение, если оно есть
+     */
+    def printIfAny(): Unit = this match {
+      case Some(v) => println(v)
+      case None => ()
+    }
+    /**
+     *
+     * Реализовать метод zip, который будет создавать Option от пары значений из 2-х Option
+     */
+    def zip[B](o2: Option[B]): Option[(T, B)] = this match {
+      case Some(v1) if !o2.isEmpty => Option(v1, o2.get)
+      case _ => None
+    }
+    /**
+     *
+     * Реализовать метод filter, который будет возвращать не пустой Option
+     * в случае если исходный не пуст и предикат от значения = true
+     */
+    def filter(p: T => Boolean): Option[T] = this match {
+      case Some(v) if p(v) => Some(v)
+      case _ => None
+    }
   }
 
   case class Some[V](v: V) extends Option[V]
@@ -240,33 +264,11 @@ object hof{
   }
 
   val o1: Option[Int] = Option(1)
-  o1.isEmpty // false
-
-
-
-
-
-
-
-
-
-  /**
-   *
-   * Реализовать метод printIfAny, который будет печатать значение, если оно есть
-   */
-
-
-  /**
-   *
-   * Реализовать метод zip, который будет создавать Option от пары значений из 2-х Option
-   */
-
-
-  /**
-   *
-   * Реализовать метод filter, который будет возвращать не пустой Option
-   * в случае если исходный не пуст и предикат от значения = true
-   */
+  println(o1.isEmpty) // false
+  o1.printIfAny()
+  println(o1.zip(Option(2)))
+  println(o1.zip(None))
+  println(o1.filter(x => x % 2 > 0))
 
  }
 
@@ -279,32 +281,79 @@ object hof{
     * Cons - непустой, содержит первый элемент (голову) и хвост (оставшийся список)
     */
 
-    trait List[+T]{
-      def ::[TT >: T](elem: TT): List[TT] = ???
-    }
+    sealed trait List[+T]{
+     /**
+      * Метод cons, добавляет элемент в голову списка, для этого метода можно воспользоваться названием `::`
+      *
+      */
+     def ::[TT >: T](elem: TT): List[TT] = this match {
+        case List.::(head, tail) => List.::(elem, List.::(head, tail))
+        case List.Nil => List(elem)
+      }
+
+     /**
+      * Метод mkString возвращает строковое представление списка, с учетом переданного разделителя
+      *
+      */
+     def mkString(sep: String = ""): String = this match {
+       case List.::(head, List.Nil) => s"$head"
+       case List.::(head, tail) => s"$head$sep" + tail.mkString(sep)
+       case List.Nil => ""
+     }
+     /**
+      *
+      * Реализовать метод reverse который позволит заменить порядок элементов в списке на противоположный
+      */
+     def reverse: List[T] = {
+       var rest = this
+       var newList: List[T] = List.Nil
+       while (rest != List.Nil) {
+         rest match {
+           case List.::(head, tail) => {
+             newList = newList.::(head)
+             rest = tail
+           }
+         }
+       }
+       newList
+     }
+
+     /**
+      *
+      * Реализовать метод map для списка который будет применять некую ф-цию к элементам данного списка
+      */
+     def map[TT >: T](f: TT => TT): List[TT] = this match {
+       case List.::(head, tail) => List.::(f(head), tail.map(f))
+       case List.Nil => List.Nil
+     }
+     /**
+      *
+      * Реализовать метод filter для списка который будет фильтровать список по некому условию
+      */
+     def filter[TT >: T](f: TT => Boolean): List[TT] = this match {
+       case List.::(head, tail) if f(head) => List.::(head, tail.filter(f))
+       case List.::(_, tail) => tail.filter(f)
+       case List.Nil => List.Nil
+     }
+   }
 
     object List{
       case class ::[A](head: A, tail: List[A]) extends List[A]
       case object Nil extends List[Nothing]
 
       def apply[A](v: A*): List[A] =
-        if(v.isEmpty) List.Nil else new ::(v.head, apply(v.tail:_*))
+        if(v.isEmpty) List.Nil else ::(v.head, apply(v.tail: _*))
     }
 
     val l1: List[Int] = List(1, 2, 3)
     val l2: List[Int] = 1 :: 2 :: 3 :: List.Nil
-
-
-
-   /**
-     * Метод cons, добавляет элемент в голову списка, для этого метода можно воспользоваться названием `::`
-     *
-     */
-
-    /**
-      * Метод mkString возвращает строковое представление списка, с учетом переданного разделителя
-      *
-      */
+    println(l2 == l1)
+    println(l2.mkString(","))
+    println(List(1).mkString(","))
+    println(List())
+    println(l1.reverse)
+    println(l1.map(x => x*x))
+    println(l1.filter(x => (x % 2 == 0)))
 
     /**
       * Конструктор, позволяющий создать список из N - го числа аргументов
@@ -314,33 +363,20 @@ object hof{
       * def printArgs(args: Int*) = args.foreach(println(_))
       */
 
-    /**
-      *
-      * Реализовать метод reverse который позволит заменить порядок элементов в списке на противоположный
-      */
-
-    /**
-      *
-      * Реализовать метод map для списка который будет применять некую ф-цию к элементам данного списка
-      */
-
-
-    /**
-      *
-      * Реализовать метод filter для списка который будет фильтровать список по некому условию
-      */
 
     /**
       *
       * Написать функцию incList котрая будет принимать список Int и возвращать список,
       * где каждый элемент будет увеличен на 1
       */
-
+    def incList(v: List[Int]): List[Int] = v.map(x => x + 1)
+    println(incList(List(1,2,3,4,5,6,7)))
 
     /**
       *
       * Написать функцию shoutString котрая будет принимать список String и возвращать список,
       * где к каждому элементу будет добавлен префикс в виде '!'
       */
-
+    def shoutString(v: List[String]): List[String] = v.map(x => s"!$x")
+    println(shoutString(List("1", "2")))
  }
